@@ -1,0 +1,40 @@
+#%RAML 1.0
+title: FTG_Order Management API
+
+types:
+  Order: !include datatypes/createOrderDataType.json
+
+traits:
+   client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      responses:
+        401:
+          description: Unauthorized, The client_id or client_secret are not valid or the client does not have access.
+        429:
+          description: The client used all of its request quota for the current period.
+        503:
+          description: Contracts Information Unreachable.
+
+/orders:
+  post:
+    body:
+      application/json:
+        type: Order
+        examples:
+          input: !include /examples/createOrderExample.json
+    responses:
+      201:
+        body:
+          application/json:
+            examples:
+              output: !include /examples/createOrderResponseExample.json           
+      400:
+        body:
+          application/json:
+            example:
+              message: Your order has not been created due to item x being out of stock. Please update your order and resubmit. We are sorry for the inconvenience.
+    
