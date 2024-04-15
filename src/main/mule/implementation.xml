@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <http:listener-config name="ftg_order-management-process-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8081" />
-    </http:listener-config>
-    <apikit:config name="ftg_order-management-process-config" api="resource::7426882b-de20-46ac-beac-06773b45e252:ftg_bc_process_layer:1.0.1:raml:zip:ftg_order-management-process.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<flow name="POST" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
+		<http:listener doc:name="Listener" doc:id="b8f51a58-6d0c-4bb3-9cda-f5f1077bb927" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="36e7d2a3-603e-4b06-aeea-3a1f574f0c1c" />
+		<ee:transform doc:name="Transform Message" doc:id="ccbbf316-6211-42a9-9c00-665112ebb618" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="GET /inventory" doc:id="415e80d4-555b-41a2-a0f2-c9fb3b4446bc" path="/inventory" config-ref="HTTP_Request_configuration"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cb989ab3-1e7a-4c68-8e08-9f14e6012dd7" />
+	</flow>
 </mule>
