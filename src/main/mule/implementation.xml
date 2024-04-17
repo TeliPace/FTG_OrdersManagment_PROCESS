@@ -1,39 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-	<flow name="implementationFlow" doc:id="f063c624-ee82-4a10-ab99-b1e0eda630d4" >
-		<http:listener doc:name="Listener" doc:id="5665383a-ffd2-4742-b9d8-dc06801cee46" config-ref="HTTP_Listener_config" path="/test"/>
-		<logger level="INFO" doc:name="Logger" doc:id="775798f0-7f93-4beb-90d6-b2927ab3c08b" />
-		<choice doc:name="Choice" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082" >
+	<flow name="POST" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
+		<http:listener doc:name="Listener" doc:id="b8f51a58-6d0c-4bb3-9cda-f5f1077bb927" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="36e7d2a3-603e-4b06-aeea-3a1f574f0c1c" />
+		<set-variable value="#[payload]" doc:name="Original Order" doc:id="22e34af8-d108-4601-a020-6ea3018594dd" variableName="customerOrder"/>
+		<http:request method="GET" doc:name="Inventory Call to System Layer" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" path="/inventory"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cb989ab3-1e7a-4c68-8e08-9f14e6012dd7" />
+		<choice doc:name="Choice" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082">
 			<when expression="#[not isEmpty(payload)]">
-				<ee:transform doc:name="Transform Message" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+				<ee:transform doc:name="Transform Message" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 
 payload reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<set-payload value='#["“Your order has not been created due to item(s) " ++ payload ++ "being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="Set Payload" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
+				<set-payload value='#["“Your order has not been created due to item(s) " ++ payload ++ " being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="Set Payload" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
+				<logger level="INFO" doc:name="Logger" doc:id="1907b765-1e86-4e55-9048-d412bfe8d694" />
 			</when>
-			<otherwise >
+			<otherwise>
 				<logger level="INFO" doc:name="Logger" doc:id="1c69609c-80f7-4a6a-a8ce-25e73deec223" />
+				<set-payload value="#[vars.customerOrder]" doc:name="Set Payload" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />
+				<http:request method="POST" doc:name="Request" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" path="/orders"/>
 			</otherwise>
 		</choice>
-	</flow>
-	<flow name="POST" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
-		<http:listener doc:name="Listener" doc:id="b8f51a58-6d0c-4bb3-9cda-f5f1077bb927" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="POST"/>
-		<logger level="INFO" doc:name="Logger" doc:id="36e7d2a3-603e-4b06-aeea-3a1f574f0c1c" />
-		<ee:transform doc:name="Transform Message" doc:id="ccbbf316-6211-42a9-9c00-665112ebb618" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="33664ff7-1400-4197-b888-15df3f570fed" >
+				<ee:transform doc:name="Transform Message" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
 ---
 {
+	message: error.description
 }]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<http:request method="GET" doc:name="GET /inventory" doc:id="415e80d4-555b-41a2-a0f2-c9fb3b4446bc" path="/inventory" config-ref="HTTP_Request_configuration"/>
-		<logger level="INFO" doc:name="Logger" doc:id="cb989ab3-1e7a-4c68-8e08-9f14e6012dd7" />
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
 	</flow>
 </mule>
