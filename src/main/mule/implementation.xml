@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+	<flow name="implementationFlow" doc:id="f063c624-ee82-4a10-ab99-b1e0eda630d4" >
+		<http:listener doc:name="Listener" doc:id="5665383a-ffd2-4742-b9d8-dc06801cee46" config-ref="HTTP_Listener_config" path="/test"/>
+		<logger level="INFO" doc:name="Logger" doc:id="775798f0-7f93-4beb-90d6-b2927ab3c08b" />
+		<choice doc:name="Choice" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082" >
+			<when expression="#[not isEmpty(payload)]">
+				<ee:transform doc:name="Transform Message" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+payload reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-payload value='#["“Your order has not been created due to item(s) " ++ payload ++ "being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="Set Payload" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1c69609c-80f7-4a6a-a8ce-25e73deec223" />
+			</otherwise>
+		</choice>
+	</flow>
 	<flow name="POST" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
 		<http:listener doc:name="Listener" doc:id="b8f51a58-6d0c-4bb3-9cda-f5f1077bb927" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="POST"/>
 		<logger level="INFO" doc:name="Logger" doc:id="36e7d2a3-603e-4b06-aeea-3a1f574f0c1c" />
