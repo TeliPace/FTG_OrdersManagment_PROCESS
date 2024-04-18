@@ -121,6 +121,6 @@ output application/json
         </error-handler>
     </flow>
     <flow name="post:\orders:application\json:ftg_order-management-process-2-config">
-		<flow-ref doc:name="POST" doc:id="301ada50-532d-4131-a60f-c8ea6c09f3d7" name="Main_flow"/>
+		<flow-ref doc:name="create-order" doc:id="301ada50-532d-4131-a60f-c8ea6c09f3d7" name="main-flow"/>
     </flow>
 </mule>
