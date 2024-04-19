@@ -2,7 +2,7 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
 	<flow name="main-flow" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
 		<set-variable value="#[payload.order_item_reference_number as String]" doc:name="extract-skus" doc:id="ca50d709-ca27-4425-93b9-481f9d6fe203" variableName="skus" />
-		<ee:transform doc:name="Transform Message" doc:id="b20f5410-d594-47cf-a09d-f9a67f45ef2e" >
+		<ee:transform doc:name="format-order" doc:id="b20f5410-d594-47cf-a09d-f9a67f45ef2e" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
@@ -63,12 +63,12 @@ payload.data reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as Strin
 			</when>
 			<otherwise>
 				<set-payload value="#[vars.customerOrder]" doc:name="set-to-order" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />
-				<http:request method="POST" doc:name="Request" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" path="/orders" />
+				<http:request method="POST" doc:name="post-to-system" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" path="/orders" />
 			</otherwise>
 		</choice>
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="33664ff7-1400-4197-b888-15df3f570fed" >
-				<ee:transform doc:name="Transform Message" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
+				<ee:transform doc:name="error-description" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
