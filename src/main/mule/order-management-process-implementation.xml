@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
 	<flow name="main-flow" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
-		<set-variable value="#[payload.order_item_reference_number as String]" doc:name="extract-skus" doc:id="ca50d709-ca27-4425-93b9-481f9d6fe203" variableName="skus" />
+		<set-variable value="#[{skus: payload.order_item_reference_number as String}]" doc:name="extract-skus" doc:id="ca50d709-ca27-4425-93b9-481f9d6fe203" variableName="skus" />
 		<ee:transform doc:name="format-order" doc:id="b20f5410-d594-47cf-a09d-f9a67f45ef2e" >
 			<ee:message >
 			</ee:message>
@@ -36,12 +36,8 @@ output application/json
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<http:request method="GET" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" path="/inventory">
-			<http:headers ><![CDATA[#[output application/java
----
-{
-	skus : vars.skus
-}]]]></http:headers>
+		<http:request method="POST" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" path="/inventory">
+			<http:body ><![CDATA[#[vars.skus]]]></http:body>
 			<http:query-params ><![CDATA[#[output application/json
 ---
 {
