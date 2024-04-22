@@ -36,14 +36,19 @@ output application/json
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<http:request method="POST" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" path="/inventory">
-			<http:body ><![CDATA[#[vars.skus]]]></http:body>
+		<http:request method="GET" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" url="${system.host}/api/inventory">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	skus : vars.skus
+}]]]></http:headers>
 			<http:query-params ><![CDATA[#[output application/json
 ---
 {
 
 }]]]></http:query-params>
 		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="0a291294-673c-4397-a063-4ec4fb068336" message="#[{MOCKPAYLOAD: payload}]"/>
 		<choice doc:name="are-items-in-stock" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082">
 			<when expression="#[not isEmpty(payload)]">
 				<ee:transform doc:name="convert-relevant-items-to-string" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3">
@@ -59,7 +64,7 @@ payload.data reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as Strin
 			</when>
 			<otherwise>
 				<set-payload value="#[vars.customerOrder]" doc:name="set-to-order" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />
-				<http:request method="POST" doc:name="post-to-system" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" path="/orders" />
+				<http:request method="POST" doc:name="post-to-system" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" url="${system.host}/orders"/>
 			</otherwise>
 		</choice>
 		<error-handler >
