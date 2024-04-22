@@ -48,7 +48,6 @@ output application/json
 
 }]]]></http:query-params>
 		</http:request>
-		<logger level="INFO" doc:name="Logger" doc:id="0a291294-673c-4397-a063-4ec4fb068336" message="#[{MOCKPAYLOAD: payload}]"/>
 		<choice doc:name="are-items-in-stock" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082">
 			<when expression="#[not isEmpty(payload)]">
 				<ee:transform doc:name="convert-relevant-items-to-string" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3">
