@@ -45,5 +45,4 @@ target/
 .mule/
 .DS_Store
 velocity.log
-src/main/resources/config.yaml
 /bin/

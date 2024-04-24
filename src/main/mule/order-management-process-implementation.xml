@@ -1,8 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
 	<flow name="main-flow" doc:id="cb3365e1-520c-4f49-91a6-bd69c5be21fb" >
-		<set-variable value="#[payload]" doc:name="save-original-order" doc:id="22e34af8-d108-4601-a020-6ea3018594dd" variableName="customerOrder"/>
-		<http:request method="GET" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" path="/inventory"/>
+		<set-variable value="#[{skus: payload.order_item_reference_number as String}]" doc:name="extract-skus" doc:id="ca50d709-ca27-4425-93b9-481f9d6fe203" variableName="skus" />
+		<ee:transform doc:name="format-order" doc:id="b20f5410-d594-47cf-a09d-f9a67f45ef2e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="customerOrder" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	client_order_id: payload.order_number,
+	lines: [{
+		sku: payload.order_item_reference_number,
+		quantity: payload.order_item_quantity,
+		sales_value: {
+			amount: payload.order_item_sale_value,
+			currency: payload.order_item_currency
+		}
+	}],
+	address: {
+		name: payload.contact.customer_name,
+		line_one: payload.shipping_details.shipping_address.street_number,
+		line_two: payload.shipping_details.shipping_address.street_name,
+		line_three: payload.shipping_details.shipping_address.street_type,
+		line_four: payload.shipping_details.shipping_address.area,
+		town: payload.shipping_details.shipping_address.town,
+		country_code: payload.shipping_details.shipping_address.country,
+		postcode: payload.shipping_details.shipping_address.postcode,
+		email_address: payload.contact.email,
+		phone_number: payload.contact.phone
+	},
+	note: payload.shipping_details.customer_note,
+	channel: payload.shipping_details.channel
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="inventory-call-to-system" doc:id="24c304bc-296e-4986-b698-fc42b2a86000" config-ref="HTTP_Request_configuration" url="${system.host}/api/inventory">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	skus : vars.skus
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/json
+---
+{
+
+}]]]></http:query-params>
+		</http:request>
 		<choice doc:name="are-items-in-stock" doc:id="f9ec2970-20d3-4944-a77a-1ebebcf02082">
 			<when expression="#[not isEmpty(payload)]">
 				<ee:transform doc:name="convert-relevant-items-to-string" doc:id="9f1c69fd-6b95-436d-90e0-902d8e6615b3">
@@ -11,19 +56,19 @@
 output application/json
 ---
 
-payload reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
+payload.data reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
 				<set-payload value='#["“Your order has not been created due to item(s) " ++ payload ++ " being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="set-to-out-of-stock-message" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
 			</when>
 			<otherwise>
-				<set-payload value="#[vars.customerOrder]" doc:name="set-to-original-order" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />
-				<flow-ref doc:name="post-order" doc:id="17e95a00-2385-447a-84d3-574b8750832b" name="post-order"/>
+				<set-payload value="#[vars.customerOrder]" doc:name="set-to-order" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />
+				<http:request method="POST" doc:name="post-to-system" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" url="${system.host}/orders"/>
 			</otherwise>
 		</choice>
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="33664ff7-1400-4197-b888-15df3f570fed" >
-				<ee:transform doc:name="Transform Message" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
+				<ee:transform doc:name="error-description" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
@@ -36,7 +81,4 @@ output application/json
 			</on-error-propagate>
 		</error-handler>
 	</flow>
-	<sub-flow name="post-order" doc:id="35fd5f18-8cc9-4862-9ea3-f6bfdfbbf932" >
-		<http:request method="POST" doc:name="Request" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" path="/orders" />
-	</sub-flow>
 </mule>
