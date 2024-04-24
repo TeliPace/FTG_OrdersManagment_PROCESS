@@ -56,10 +56,10 @@ output application/json
 output application/json
 ---
 
-payload.data reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
+payload reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as String)]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<set-payload value='#["“Your order has not been created due to item(s) " ++ payload ++ " being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="set-to-out-of-stock-message" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
+				<set-payload value='#["Your order has not been created due to item(s) " ++ payload.sku ++ " being out of stock. Please update your order and resubmit. We are sorry for the inconvenience."]' doc:name="set-to-out-of-stock-message" doc:id="4a533cc1-8bfe-4f5f-ad86-e7db2d34e57c" />
 			</when>
 			<otherwise>
 				<set-payload value="#[vars.customerOrder]" doc:name="set-to-order" doc:id="8e58b498-8560-49d2-af03-cb8cd59f621b" />

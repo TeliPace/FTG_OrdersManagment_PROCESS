@@ -27,7 +27,7 @@
         <apikit:console config-ref="ftg_order-management-process-2-config" />
 		<error-handler ref="globalError_Handler" />
     </flow>
-    <flow name="post:\orders:application\json:ftg_order-management-process-2-config">
+    <flow name="post:\orders:application\json:ftg_order-management-process-2-config" doc:id="40c5d107-2651-4b54-a8db-be5a612ce6ec">
 		<flow-ref doc:name="create-order" doc:id="301ada50-532d-4131-a60f-c8ea6c09f3d7" name="main-flow"/>
 		<error-handler ref="globalError_Handler" />
     </flow>
