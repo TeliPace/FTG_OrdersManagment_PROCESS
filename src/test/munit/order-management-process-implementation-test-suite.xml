@@ -9,9 +9,95 @@
 		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
 	<munit:config name="order-management-process-implementation-test-suite.xml" />
 	<munit:test name="order-management-process-implementation-main-flow-test-suite-positive" doc:id="1490b009-638a-40d2-a8ba-693a80dbf3ee" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="inventory-call-to-system" doc:id="bb64d59d-5281-4f8c-9214-495f6b15964b" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="24c304bc-296e-4986-b698-fc42b2a86000" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="create-order-to-system" doc:id="bd104741-eafd-4c28-b595-53ff3bdd18b9" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="e38e4909-0686-4fc7-8a96-37ddf50fe01c" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[output application/json --- readUrl("classpath://api/examples/createOrderResponseExample.json")]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
 		<munit:execution >
+			<munit:set-event doc:name="set-payload" doc:id="96868b22-0df9-4efb-9a90-6caf9cba5dff" >
+				<munit:payload value='#[{&#10;	 "order_number": "6514654581",&#10;	 "order_item_reference_number": 119119126,&#10;	 "order_item_quantity": 1,&#10;	 "order_item_sale_value": 22.99,&#10;	 "order_item_currency": "GBP",&#10;	 "contact":{&#10;		 "customer_name":"George Smith",&#10;		 "email":"example@domain.com",&#10;		 "phone":"7123456789"&#10;	},&#10;	 "shipping_details":&#10;	{&#10;		 "shipping_address":{&#10;			 "street_number":"1",&#10;			 "street_name" :"Mushroom",&#10;			 "street_type":"Lane",&#10;			 "area":"Uppercounty",&#10;			 "town":"Bristol",&#10;			 "country":"United Kingdom",&#10;			 "postcode":"AB1 2CD"			 &#10;		 },&#10;		  "customer_note" : "This is my very special order note.",&#10;		  "channel": null&#10;	}&#10;}]' />
+			</munit:set-event>
 			<flow-ref doc:name="Flow-ref to main-flow" doc:id="b7643f98-b2da-4c84-9644-514b33e9443e" name="main-flow"/>
 		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert doc:name="Assert expression" doc:id="a3b31e08-e0a9-477d-881b-be8028b24d82" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload must equalTo({
+    "data": [
+        {
+            "id": "6672-1670951798-6398b3765f85a",
+            "client_order_id": "6514654581",
+            "lines": [
+                {
+                    "id": 1443684,
+                    "sku": 811329,
+                    "identifier": "223344",
+                    "quantity": 1,
+                    "sales_value": {
+                        "amount": 22.99,
+                        "currency": "GBP"
+                    },
+                    "batch_details": []
+                }
+            ],
+            "address": {
+                "name": "GEORGE SMITH",
+                "line_one": "1 Mushroom Lane",
+                "line_two": "Middletown",
+                "line_three": "Uppercounty",
+                "line_four": "Lowerregion",
+                "town": "Bristol",
+                "country_code": "GB",
+                "postcode": "AB1 2CD",
+                "email_address": "example@domain.com",
+                "phone_number": "+44 7123456789"
+            },
+            "status": "In Progress",
+            "shipping_service": "",
+            "tracking": [
+                {
+                    "dispatched": false,
+                    "dispatched_from_city": null,
+                    "carrier_name": null,
+                    "carrier_service": null,
+                    "tracking_url": null,
+                    "tracking_number": null,
+                    "lines": [
+                        {
+                            "id": 1443684,
+                            "sku": 811329,
+                            "client_sku": "234",
+                            "identifier": "223344"
+                        }
+                    ]
+                }
+            ],
+            "note": "This is my very special order note.",
+            "channel": "amazon",
+            "order_options": {
+                "has_dispatch_note": false
+            },
+            "created_at": "2022-12-13T17:16:38Z"
+        }
+    ]
+})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
 	</munit:test>
 
 
