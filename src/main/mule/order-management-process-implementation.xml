@@ -66,19 +66,5 @@ payload.data reduce((item, acc)-> acc.sku as String ++ ", " ++ item.sku as Strin
 				<http:request method="POST" doc:name="post-to-system" doc:id="e38e4909-0686-4fc7-8a96-37ddf50fe01c" config-ref="HTTP_Request_configuration" url="${system.host}/orders"/>
 			</otherwise>
 		</choice>
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="33664ff7-1400-4197-b888-15df3f570fed" >
-				<ee:transform doc:name="error-description" doc:id="21501119-60e1-4e3e-aa8e-9d5cb5b342b3" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-propagate>
-		</error-handler>
 	</flow>
 </mule>
